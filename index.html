@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Falegnameria Pagani · Analisi Operativa — Pagani Consulting</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #181c27;
+      --surface2: #1e2333;
+      --border: #2a2f42;
+      --accent: #4f8ef7;
+      --accent2: #34d399;
+      --text: #e8ecf4;
+      --text-muted: #8892aa;
+      --text-faint: #4a5068;
+      --warning: #f59e0b;
+      --danger: #f87171;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    /* ── TOP BAND ── */
+    .top-band {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 0;
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-muted);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .top-band span {
+      color: var(--accent2);
+      font-weight: 600;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      max-width: 860px;
+      margin: 60px auto 0;
+      padding: 0 24px;
+    }
+    .prepared-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(79,142,247,0.12);
+      border: 1px solid rgba(79,142,247,0.3);
+      border-radius: 20px;
+      padding: 5px 14px;
+      font-size: 13px;
+      color: var(--accent);
+      margin-bottom: 28px;
+    }
+    .prepared-tag .dot {
+      width: 6px; height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .hero h1 {
+      font-size: clamp(28px, 4vw, 44px);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      margin-bottom: 18px;
+    }
+    .hero h1 em {
+      font-style: normal;
+      color: var(--accent);
+    }
+
+    .hero .subtitle {
+      font-size: 17px;
+      color: var(--text-muted);
+      max-width: 600px;
+      margin-bottom: 40px;
+    }
+
+    /* ── DIVIDER ── */
+    .divider {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 0 24px;
+      border-top: 1px solid var(--border);
+    }
+
+    /* ── SECTION ── */
+    .section {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 48px 24px;
+    }
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-faint);
+      margin-bottom: 20px;
+    }
+    .section h2 {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      letter-spacing: -0.01em;
+    }
+
+    /* ── KPI CARDS ── */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+    .kpi-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px 20px;
+    }
+    .kpi-card .kpi-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      margin-bottom: 8px;
+    }
+    .kpi-card .kpi-value {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text);
+    }
+    .kpi-card .kpi-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* ── CHART ── */
+    .chart-container {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin-top: 24px;
+    }
+    .chart-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+    .chart-note {
+      font-size: 12px;
+      color: var(--text-faint);
+      margin-bottom: 20px;
+    }
+    .chart-canvas-wrap {
+      position: relative;
+      height: 180px;
+    }
+
+    /* ── ACCORDION ── */
+    .accordion {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .acc-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+    .acc-item.open {
+      border-color: rgba(79,142,247,0.35);
+    }
+    .acc-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 16px 20px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .acc-index {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-faint);
+      min-width: 20px;
+    }
+    .acc-tag {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 3px 9px;
+      border-radius: 4px;
+      min-width: 80px;
+      text-align: center;
+    }
+    .tag-red   { background: rgba(248,113,113,0.15); color: #f87171; }
+    .tag-amber { background: rgba(245,158,11,0.15);  color: #f59e0b; }
+    .tag-blue  { background: rgba(79,142,247,0.15);  color: #4f8ef7; }
+
+    .acc-title {
+      flex: 1;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .acc-arrow {
+      font-size: 18px;
+      color: var(--text-faint);
+      transition: transform 0.25s;
+    }
+    .acc-item.open .acc-arrow { transform: rotate(180deg); }
+
+    .acc-body {
+      display: none;
+      padding: 0 20px 18px 54px;
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.7;
+    }
+    .acc-body .what {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-faint);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 6px;
+    }
+    .acc-body .implication {
+      margin-top: 12px;
+      padding: 10px 14px;
+      background: rgba(79,142,247,0.07);
+      border-left: 3px solid var(--accent);
+      border-radius: 4px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    .acc-item.open .acc-body { display: block; }
+
+    /* ── PROPOSTA ── */
+    .proposta-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 36px 32px;
+    }
+    .proposta-box h3 {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 14px;
+    }
+    .proposta-box p {
+      font-size: 15px;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+      max-width: 580px;
+    }
+    .proposta-list {
+      list-style: none;
+      margin: 20px 0 28px;
+    }
+    .proposta-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+    .proposta-list li::before {
+      content: '✓';
+      color: var(--accent2);
+      font-weight: 700;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .badge-gratuita {
+      display: inline-block;
+      background: rgba(52,211,153,0.12);
+      border: 1px solid rgba(52,211,153,0.35);
+      color: var(--accent2);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 4px 12px;
+      border-radius: 20px;
+      margin-bottom: 18px;
+    }
+
+    /* ── PROFILO ── */
+    .profilo-box {
+      display: flex;
+      gap: 24px;
+      align-items: flex-start;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 28px 30px;
+    }
+    .profilo-avatar {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #4f8ef7, #34d399);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      font-weight: 700;
+      color: white;
+      flex-shrink: 0;
+    }
+    .profilo-info h3 {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .profilo-info .role {
+      font-size: 13px;
+      color: var(--accent);
+      margin-bottom: 12px;
+    }
+    .profilo-info p {
+      font-size: 14px;
+      color: var(--text-muted);
+      max-width: 540px;
+    }
+
+    /* ── CTA ── */
+    .cta-wrap {
+      text-align: center;
+      padding: 56px 24px;
+      max-width: 860px;
+      margin: 0 auto;
+    }
+    .cta-wrap h2 {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .cta-wrap p {
+      font-size: 16px;
+      color: var(--text-muted);
+      margin-bottom: 32px;
+    }
+    .btn-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--accent);
+      color: white;
+      font-size: 15px;
+      font-weight: 700;
+      padding: 14px 28px;
+      border-radius: 10px;
+      text-decoration: none;
+      transition: opacity 0.2s, transform 0.15s;
+    }
+    .btn-cta:hover { opacity: 0.88; transform: translateY(-1px); }
+    .btn-cta svg { width: 18px; height: 18px; fill: white; }
+
+    .footer {
+      text-align: center;
+      padding: 28px 24px;
+      font-size: 12px;
+      color: var(--text-faint);
+      border-top: 1px solid var(--border);
+    }
+
+    @media (max-width: 600px) {
+      .profilo-box { flex-direction: column; }
+      .kpi-grid { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="top-band">
+  Preparato da <span>Pagani Consulting</span> · Analisi su fonti pubbliche · Aprile 2026
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="prepared-tag">
+    <span class="dot"></span>
+    Preparato per Marco Pagani · Falegnameria Pagani
+  </div>
+  <h1>Ho analizzato<br/><em>Falegnameria Pagani</em><br/>prima di contattarla.</h1>
+  <p class="subtitle">
+    Questa pagina non è materiale commerciale generico. È un'analisi operativa fatta su misura, basata su fonti pubbliche. Il motivo è semplice: preferisco arrivare preparato.
+  </p>
+</section>
+
+<div class="divider"></div>
+
+<!-- KPI -->
+<section class="section">
+  <div class="section-label">Dati aziendali</div>
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-label">Anni di attività</div>
+      <div class="kpi-value">60+</div>
+      <div class="kpi-sub">Fondata negli anni '60</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Settore</div>
+      <div class="kpi-value" style="font-size:16px; line-height:1.3; margin-top:4px;">Serramenti<br/>in legno</div>
+      <div class="kpi-sub">ATECO 16.25</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Dipendenti (2026)</div>
+      <div class="kpi-value">5</div>
+      <div class="kpi-sub">Da 4 nel 2022</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Forma giuridica</div>
+      <div class="kpi-value" style="font-size:16px;">S.n.c.</div>
+      <div class="kpi-sub">Società familiare</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Sede</div>
+      <div class="kpi-value" style="font-size:15px; line-height:1.3; margin-top:4px;">Magnago<br/>(MI)</div>
+      <div class="kpi-sub">Via San Gaetano 58</div>
+    </div>
+  </div>
+
+  <!-- CHART -->
+  <div class="chart-container">
+    <div class="chart-title">Andamento dipendenti · 2022–2026</div>
+    <div class="chart-note">Fonte: Registro Imprese / dati pubblici. Dati fatturato non disponibili pubblicamente.</div>
+    <div class="chart-canvas-wrap">
+      <canvas id="chartDip"></canvas>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- SEGNALI OPERATIVI -->
+<section class="section">
+  <div class="section-label">Quello che ho osservato</div>
+  <h2>5 segnali operativi rilevanti</h2>
+
+  <div class="accordion">
+
+    <!-- 1 -->
+    <div class="acc-item open" onclick="toggle(this)">
+      <div class="acc-header">
+        <span class="acc-index">01</span>
+        <span class="acc-tag tag-amber">Prioritario</span>
+        <span class="acc-title">Transizione generazionale in corso</span>
+        <span class="acc-arrow">▾</span>
+      </div>
+      <div class="acc-body">
+        <div class="what">Cosa si vede</div>
+        Un'azienda familiare con 60+ anni di storia, fondata da Antonio e Roberto Pagani, con una seconda generazione che inizia ad affacciarsi alla gestione. In una SNC artigianale, il cambio generazionale è il momento più delicato: i processi che funzionavano perché "li sapeva fare lui" devono diventare sistemi trasferibili.
+        <div class="implication">
+          → Questo è il momento in cui strutturare produzione, preventivazione e post-vendita in modo che non dipendano dalla presenza fisica di una singola persona.
+        </div>
+      </div>
+    </div>
+
+    <!-- 2 -->
+    <div class="acc-item" onclick="toggle(this)">
+      <div class="acc-header">
+        <span class="acc-index">02</span>
+        <span class="acc-tag tag-red">Critico</span>
+        <span class="acc-title">Organico cresciuto col Superbonus, ora da ottimizzare</span>
+        <span class="acc-arrow">▾</span>
+      </div>
+      <div class="acc-body">
+        <div class="what">Cosa si vede</div>
+        I dipendenti sono passati da 4 (2022) a 6 (2023–2024), poi ridotti a 5 (2025–2026). Il ciclo è coerente con il boom da Superbonus 110%, che ha gonfiato artificialmente la domanda di serramenti e infissi tra il 2021 e il 2023. Con la riduzione degli incentivi, la domanda si è normalizzata e l'organico ha seguito.
+        <div class="implication">
+          → Con 5 persone in produzione + gestione, ogni inefficienza nel flusso di lavoro pesa doppio. Il recupero di produttività per addetto diventa la leva principale sulla marginalità.
+        </div>
+      </div>
+    </div>
+
+    <!-- 3 -->
+    <div class="acc-item" onclick="toggle(this)">
+      <div class="acc-header">
+        <span class="acc-index">03</span>
+        <span class="acc-tag tag-red">Critico</span>
+        <span class="acc-title">Mercato serramenti in contrazione strutturale</span>
+        <span class="acc-arrow">▾</span>
+      </div>
+      <div class="acc-body">
+        <div class="what">Cosa si vede</div>
+        Il mercato residenziale dei serramenti ha registrato un −4% nel 2024 (fonte: Edilportale / Cosmoserr), con previsioni di ulteriore contrazione nel 2025 legate alla riduzione degli incentivi fiscali. Le aziende artigianali che hanno dimensionato la struttura sul picco 2021–2023 si trovano ora a dover gestire costi fissi su volumi più bassi.
+        <div class="implication">
+          → In un mercato che si stringe, la qualità artigianale non basta da sola. Serve un controllo preciso dei costi di commessa e una pipeline clienti strutturata per non dipendere solo dal passaparola.
+        </div>
+      </div>
+    </div>
+
+    <!-- 4 -->
+    <div class="acc-item" onclick="toggle(this)">
+      <div class="acc-header">
+        <span class="acc-index">04</span>
+        <span class="acc-tag tag-amber">Rilevante</span>
+        <span class="acc-title">Struttura SNC senza separazione ruoli gestionali</span>
+        <span class="acc-arrow">▾</span>
+      </div>
+      <div class="acc-body">
+        <div class="what">Cosa si vede</div>
+        In una SNC con 5 addetti e due soci-operatori, la struttura tipica è quella in cui gli stessi soggetti gestiscono preventivi, produzione, installazione, acquisti e post-vendita. Non c'è separazione tra chi fa e chi gestisce. Questa configurazione funziona fino a un certo carico di lavoro, poi genera colli di bottiglia e perdita di controllo sulla marginalità per commessa.
+        <div class="implication">
+          → Definire chi fa cosa — anche informalmente — e introdurre un minimo di tracciabilità su tempi e costi per commessa è il passo che separa l'artigiano dal piccolo imprenditore strutturato.
+        </div>
+      </div>
+    </div>
+
+    <!-- 5 -->
+    <div class="acc-item" onclick="toggle(this)">
+      <div class="acc-header">
+        <span class="acc-index">05</span>
+        <span class="acc-tag tag-blue">Opportunità</span>
+        <span class="acc-title">60 anni di reputazione senza struttura commerciale visibile</span>
+        <span class="acc-arrow">▾</span>
+      </div>
+      <div class="acc-body">
+        <div class="what">Cosa si vede</div>
+        "Oltre 60 anni di esperienza" e "qualità artigianale" sono asset reali e rari nel settore, ma non ci sono evidenze pubbliche di un processo strutturato per acquisire clienti al di fuori del passaparola locale. Nessuna presenza LinkedIn, visibilità web basica, nessuna comunicazione sui canali digitali.
+        <div class="implication">
+          → La reputazione costruita in 60 anni può diventare un vantaggio competitivo difendibile anche in un mercato in calo — ma solo se supportata da un processo di acquisizione e fidelizzazione clienti che non dipenda esclusivamente dal passaparola.
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- PROPOSTA -->
+<section class="section">
+  <div class="section-label">La mia proposta</div>
+  <div class="proposta-box">
+    <div class="badge-gratuita">Giornata diagnostica · gratuita</div>
+    <h3>Una giornata insieme, senza impegni.</h3>
+    <p>
+      Vengo in azienda, osservo il flusso di lavoro, ragiono con voi su dove si perdono ore e margine. Al termine della giornata avete una diagnosi chiara — scritta, non orale — di cosa intervenire e in che ordine. Nessun costo, nessun obbligo di proseguire.
+    </p>
+    <ul class="proposta-list">
+      <li>Analisi del flusso produttivo e della gestione delle commesse</li>
+      <li>Identificazione dei 2–3 colli di bottiglia con maggiore impatto su tempi e margine</li>
+      <li>Documento di sintesi con priorità e stima dell'impatto atteso</li>
+      <li>Discussione aperta su come strutturare la transizione generazionale operativa</li>
+    </ul>
+    <p style="font-size:14px;">
+      Se dopo la giornata vogliamo lavorare insieme su un progetto concreto, ne parliamo. Se no, avete comunque una fotografia utile dell'azienda.
+    </p>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- PROFILO -->
+<section class="section">
+  <div class="section-label">Chi sono</div>
+  <div class="profilo-box">
+    <div class="profilo-avatar">LP</div>
+    <div class="profilo-info">
+      <h3>Lorenzo Pagani</h3>
+      <div class="role">Consulente Operativo · Pagani Consulting</div>
+      <p>
+        Lavoro con PMI manifatturiere in Lombardia su operations, lean manufacturing e supply chain. Mi occupo di produzione, approvvigionamento e processi di consegna — non di strategie astratte. Il mio approccio è quello di chi entra in azienda, capisce come funziona davvero e poi propone interventi concreti con risultati misurabili. Ho lavorato anche nel settore della falegnameria e dei materiali per l'edilizia di fascia alta.
+      </p>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- CTA -->
+<div class="cta-wrap">
+  <h2>Parliamone.</h2>
+  <p>Bastano 15 minuti per capire se ha senso approfondire. Nessun pitch, nessuna presentazione.</p>
+  <a class="btn-cta" href="https://linkedin.com/in/lorenzo-pagani-consulting" target="_blank" rel="noopener">
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+    Contatta Lorenzo su LinkedIn
+  </a>
+</div>
+
+<div class="footer">
+  © 2026 Pagani Consulting · P.IVA 03557490128 · paganiconsulting.com · Analisi elaborata su fonti pubbliche
+</div>
+
+<script>
+  // Accordion toggle
+  function toggle(el) {
+    el.classList.toggle('open');
+  }
+
+  // Chart dipendenti
+  const ctx = document.getElementById('chartDip').getContext('2d');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['2022', '2023', '2024', '2025', '2026'],
+      datasets: [{
+        label: 'Dipendenti',
+        data: [4, 6, 6, 5, 5],
+        backgroundColor: function(context) {
+          const v = context.dataset.data[context.dataIndex];
+          if (v >= 6) return 'rgba(245,158,11,0.7)';
+          return 'rgba(79,142,247,0.65)';
+        },
+        borderColor: function(context) {
+          const v = context.dataset.data[context.dataIndex];
+          if (v >= 6) return 'rgba(245,158,11,1)';
+          return 'rgba(79,142,247,1)';
+        },
+        borderWidth: 1.5,
+        borderRadius: 5,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ${ctx.parsed.y} dipendenti`
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: 'rgba(255,255,255,0.05)' },
+          ticks: { color: '#8892aa', font: { size: 12 } }
+        },
+        y: {
+          grid: { color: 'rgba(255,255,255,0.05)' },
+          ticks: {
+            color: '#8892aa',
+            font: { size: 12 },
+            stepSize: 1,
+            callback: v => v + ' dip.'
+          },
+          min: 0,
+          max: 8,
+        }
+      }
+    }
+  });
+</script>
+</body>
+</html>
